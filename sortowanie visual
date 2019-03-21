@@ -1,3 +1,4 @@
+#include "pch.h"
 #include <iostream>
 #include <vector>
 #include <ctime>
@@ -19,32 +20,40 @@ template <class item>
 void SortujMalejaco(vector <item> & tab, int left, int right);
 template <class item>
 void SprawdzTablice(vector <item> & tab);
+chrono::duration<double> minTime(chrono::duration<double> time[], size_t size);
+chrono::duration<double> maxTime(chrono::duration<double> time[], size_t size);
+chrono::duration<double> sumTime(chrono::duration<double> time[], size_t size);
 int main()
 {
 	srand(time(NULL));
-	size_t ilosc = 100;							//il tablic
-	vector <vector <int>> tablica1(ilosc);		// tablica dla merge
-	vector <vector <int>> tablica2(ilosc);		// tablica dla quick
-	vector <vector <int>> tablica3(ilosc);		// tablica dla intro
-	auto start = chrono::system_clock::now();	//zegar
+	const size_t ilosc = 100;
+	vector <vector <int>> tablica1(ilosc);
+	vector <vector <int>> tablica2(ilosc);
+	vector <vector <int>> tablica3(ilosc);
+	auto start = chrono::system_clock::now();
 	auto end = chrono::system_clock::now();
-	chrono::duration<double> elapsed_seconds = end - start;		//wynik to roznica czasow
+	chrono::duration<double> elapsed_seconds[ilosc];
 
-	size_t rozmiar = wybierzRozmiar();			//deklaracja rozmiaru tablicy
-	for (size_t i = 0; i < ilosc; i++)			
-	{
-		for (size_t j = 0; j < rozmiar; j++) //wypelnienie tablicy liczbami do 1k
-		{
-			tablica1[i].push_back(rand() % 1000);
-			tablica2[i] = tablica1[i];
-			tablica3[i] = tablica1[i];
-		}
-	}
+	size_t rozmiar = wybierzRozmiar();
+
 	char wybor;
 	for (;;)
 	{
-	tryb:										//menu programu
-		cout << "PANEL SORTOWANIA" << endl;								
+		//Losowanie elementow
+		for (size_t i = 0; i < ilosc; i++)
+		{
+			tablica1[i].clear();
+			for (size_t j = 0; j < rozmiar; j++)
+			{
+				tablica1[i].push_back(rand() % 1000);
+				tablica2[i] = tablica1[i];
+				tablica3[i] = tablica1[i];
+			}
+		}
+
+	tryb:
+		system("cls");
+		cout << "PANEL SORTOWANIA" << endl;
 		cout << "Wybierz tryb eksperymentu: " << endl;
 		cout << "1. Wszystkie elementy tablicy losowe " << endl;
 		cout << "2. N poczatkowych elementow tablicy posortowane " << endl;
@@ -54,9 +63,9 @@ int main()
 		system("cls"); //Czyszczenie okna konsoli
 		switch (wybor)
 		{
-		case '1':					//losowe
+		case '1':
 			break;
-		case '2':					//% posortowania
+		case '2':
 			double N;
 			cout << "1. 25%" << endl;
 			cout << "2. 50%" << endl;
@@ -76,7 +85,7 @@ int main()
 			{
 				goto N;
 			}
-			for (size_t i = 0; i < ilosc; i++)			//quicksort do % posortowania
+			for (size_t i = 0; i < ilosc; i++)
 			{
 				QuickSort(tablica1[i], 0, (rozmiar - 1)*N / 100);
 				QuickSort(tablica2[i], 0, (rozmiar - 1)*N / 100);
@@ -84,7 +93,7 @@ int main()
 			}
 
 			break;
-		case '3':									//odwrocone sortowanie na zasadzie quicksortu
+		case '3':
 			for (size_t i = 0; i < ilosc; i++)
 			{
 				SortujMalejaco(tablica1[i], 0, rozmiar - 1);
@@ -92,7 +101,7 @@ int main()
 				SortujMalejaco(tablica3[i], 0, rozmiar - 1);
 			}
 			break;
-		case '4':					//koniec programu
+		case '4':
 			exit(0);
 		default:
 			system("cls");
@@ -109,39 +118,55 @@ int main()
 		}
 		system("cls");
 
-		start = chrono::system_clock::now();	//sortowanie oraz obliczanie czasu
+		cout << "Mergesort: " << endl;
 		for (size_t i = 0; i < ilosc; i++)
 		{
+			start = chrono::system_clock::now();
 			Mergesort(tablica1[i], 0, rozmiar - 1);
+			end = chrono::system_clock::now();
+			elapsed_seconds[i] = end - start;
 		}
-		end = chrono::system_clock::now();
-		elapsed_seconds = end - start;
-		cout << "Mergesort: " << elapsed_seconds.count() * 1000 << " ms" << endl;
-
-		start = chrono::system_clock::now();
-		for (size_t i = 0; i < ilosc; i++)
-		{
-			QuickSort(tablica2[i], 0, rozmiar - 1);
-		}
-		end = chrono::system_clock::now();
-		elapsed_seconds = end - start;
-		cout << "Quicksort: " << elapsed_seconds.count() * 1000 << " ms" << endl;
-
-		start = chrono::system_clock::now();
-		for (size_t i = 0; i < ilosc; i++)
-		{
-			IntroSort(tablica3[i], rozmiar);
-		}
-		end = chrono::system_clock::now();
-		elapsed_seconds = end - start;
-		cout << "Introsort: " << elapsed_seconds.count() * 1000 << " ms" << endl;
-
+		cout << "Calkowity czas sortowania: " << sumTime(elapsed_seconds, ilosc).count() * 1000 << " ms" << endl;
+		cout << "Sredni czas: " << (minTime(elapsed_seconds, ilosc).count()+maxTime(elapsed_seconds, ilosc).count()) /2 * 1000 << " ms" << endl;
+		cout << "Najszybsze sortowanie: " << minTime(elapsed_seconds, ilosc).count() * 1000 << " ms" << endl;
+		cout << "Najwolniejsze sortowanie: " << maxTime(elapsed_seconds, ilosc).count() * 1000 << " ms" << endl;
 		SprawdzTablice(tablica1[0]);
+
+		cout << endl << "Quicksort: " << endl;
+		for (size_t i = 0; i < ilosc; i++)
+		{
+			start = chrono::system_clock::now();
+			QuickSort(tablica2[i], 0, rozmiar - 1);
+			end = chrono::system_clock::now();
+			elapsed_seconds[i] = end - start;
+
+		}
+		cout << "Calkowity czas sortowania: " << sumTime(elapsed_seconds, ilosc).count() * 1000 << " ms" << endl;
+		cout << "Sredni czas: " << (minTime(elapsed_seconds, ilosc).count() + maxTime(elapsed_seconds, ilosc).count())/2 * 1000 << " ms" << endl;
+		cout << "Najszybsze sortowanie: " << minTime(elapsed_seconds, ilosc).count() * 1000 << " ms" << endl;
+		cout << "Najwolniejsze sortowanie: " << maxTime(elapsed_seconds, ilosc).count() * 1000 << " ms" << endl;
+		SprawdzTablice(tablica2[0]);
+
+		cout << endl << "Introsort: " << endl;
+		for (size_t i = 0; i < ilosc; i++)
+		{
+			start = chrono::system_clock::now();
+			IntroSort(tablica3[i], rozmiar);
+			end = chrono::system_clock::now();
+			elapsed_seconds[i] = end - start;
+		}
+		cout << "Calkowity czas sortowania: " << sumTime(elapsed_seconds, ilosc).count() * 1000 << " ms" << endl;
+		cout << "Sredni czas: " << (minTime(elapsed_seconds, ilosc).count() + maxTime(elapsed_seconds, ilosc).count())/2* 1000 << " ms" << endl;
+		cout << "Najszybsze sortowanie: " << minTime(elapsed_seconds, ilosc).count() * 1000 << " ms" << endl;
+		cout << "Najwolniejsze sortowanie: " << maxTime(elapsed_seconds, ilosc).count() * 1000 << " ms" << endl;
+
+		SprawdzTablice(tablica3[0]);
+		cout << "Enter, aby kontynuowac" << endl;
 		cin.get();
 	}
 }
 
-size_t wybierzRozmiar()		//wybor rozmiaru tablic
+size_t wybierzRozmiar()
 {
 	size_t rozmiar;
 	char wybor;
@@ -185,21 +210,21 @@ void wyswietlTablice(vector <item> tab)
 		cout << tab[i] << endl;
 	}
 }
-template <class item>					
+template <class item>
 void QuickSort(vector <item> & tab, int left, int right)
 {
 	int i = left;
 	int j = right;
-	int x = tab[(left + right) / 2];			//element podzialu
+	int x = tab[(left + right) / 2];
 	do
 	{
-		while (tab[i] < x)					
+		while (tab[i] < x)
 			i++;
 
 		while (tab[j] > x)
 			j--;
 
-		if (i <= j)							//zamiana miejscami elementow
+		if (i <= j)
 		{
 			swap(tab[i], tab[j]);
 
@@ -296,7 +321,7 @@ void MaxHeapify(vector <item> & data, int heapSize, int index)
 	}
 }
 template <class item>
-void HeapSort(vector <item> & data, int count)			//Heapsort potrzebny dla instrosorta
+void HeapSort(vector <item> & data, int count)
 {
 	int heapSize = count;
 
@@ -356,7 +381,7 @@ void IntroSort(vector <item> & data, int count)
 	}
 }
 template <class item>
-void SortujMalejaco(vector <item> & tab, int left, int right)		//quicksort dzialajacy odwrotnie
+void SortujMalejaco(vector <item> & tab, int left, int right)
 {
 	int i = left;
 	int j = right;
@@ -383,10 +408,10 @@ void SortujMalejaco(vector <item> & tab, int left, int right)		//quicksort dzial
 	if (right > i) SortujMalejaco(tab, i, right);
 }
 template <class item>
-void SprawdzTablice(vector <item> & tab)		//f do sprawdzenia tablicy-porownuje ze soba elemtny tablic czy nastepny jest >= wczesniejszy
+void SprawdzTablice(vector <item> & tab)
 {
 	bool ok;
-	for (size_t i = 0; i < tab.size()-2; i++)
+	for (size_t i = 0; i < tab.size() - 2; i++)
 	{
 		if (tab[i] <= tab[i + 1])
 		{
@@ -399,11 +424,37 @@ void SprawdzTablice(vector <item> & tab)		//f do sprawdzenia tablicy-porownuje z
 	}
 	if (ok == true)
 	{
-		cout << "Jest okej" << endl;
+		cout << "Dobrze posortowano" << endl;
 	}
 	else
 	{
-		cout<<"Zle posortowano" << endl;
+		cout << "Zle posortowano" << endl;
 	}
-	cin.get();
+}
+chrono::duration<double> minTime(chrono::duration<double> time[], size_t size)
+{
+	chrono::duration<double> sumTime = time[0];
+	for (size_t i = 0; i < size - 1; i++)
+	{
+		if (time[i + 1] < time[i]) sumTime = time[i + 1];
+	}
+	return sumTime;
+}
+chrono::duration<double> maxTime(chrono::duration<double> time[], size_t size)
+{
+	chrono::duration<double> sumTime = time[0];
+	for (size_t i = 0; i < size - 1; i++)
+	{
+		if (time[i + 1] > time[i]) sumTime = time[i + 1];
+	}
+	return sumTime;
+}
+chrono::duration<double> sumTime(chrono::duration<double> time[], size_t size)
+{
+	chrono::duration<double> sumTime = (chrono::duration<double>)0;
+	for (size_t i = 0; i < size; i++)
+	{
+		sumTime += time[i];
+	}
+	return sumTime;
 }
